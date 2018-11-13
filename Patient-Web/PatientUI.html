@@ -1,0 +1,295 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>PatientDetails</title>
+    <script src="Scripts/jquery-3.3.1.js"></script>
+    <script src="Scripts/Patient.js"></script>
+    
+    <script type="text/javascript">
+
+
+        // function for  convert proper dateformat ex: date/month/year
+        function dateToDMY(date) {
+            var d = date.getDate();
+            var m = date.getMonth() + 1; //Month from 0 to 11
+            var y = date.getFullYear();
+
+            return (d <= 9 ? '0' + d : d) + '/' + (m <= 9 ? '0' + m : m) + '/' + y;
+        }
+
+        //function for dateformat validation
+        function Checkdateformat(datecontrol) {
+            var dateformat = /^(0?[1-9]|[12][0-9]|3[01])[\/\-](0?[1-9]|1[012])[\/\-]\d{4}$/;
+            var Val_date = datecontrol;
+            if (Val_date.match(dateformat)) {
+                var seperator1 = Val_date.split('/');
+                var seperator2 = Val_date.split('-');
+
+                if (seperator1.length > 1) {
+                    var splitdate = Val_date.split('/');
+                }
+                else if (seperator2.length > 1) {
+                    var splitdate = Val_date.split('-');
+                }
+                var dd = parseInt(splitdate[0]);
+                var mm = parseInt(splitdate[1]);
+                var yy = parseInt(splitdate[2]);
+                var ListofDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                if (mm == 1 || mm > 2) {
+                    if (dd > ListofDays[mm - 1]) {
+                        alert('Invalid date format!');
+
+                        return false;
+                    }
+                }
+                if (mm == 2) {
+                    var lyear = false;
+                    if ((!(yy % 4) && yy % 100) || !(yy % 400)) {
+                        lyear = true;
+                    }
+                    if ((lyear == false) && (dd >= 29)) {
+                        alert('Invalid date format!');
+
+                        return false;
+                    }
+                    if ((lyear == true) && (dd > 29)) {
+                        alert('Invalid date format!');
+
+                        return false;
+                    }
+                }
+            }
+            else {
+                alert("Invalid date format!");
+
+                return false;
+            }
+        }
+        function validation() {
+            if ($('#txtForeName').val() == "") {
+                alert('ForeName field should not be blank');
+
+                return false;
+            }
+            if ($('#txtSurName').val() == "") {
+                alert('SurName field should not be blank');
+
+                return false;
+            }
+            if ($('#txtDOB').val() == "") {
+                alert('DateOfBirth field should not be blank');
+
+                return false;
+            }
+            if ($('#ddlGender option:selected').text() == 'Select') {
+                alert('Gender field should not be select');
+
+                return false
+            }
+            if ($('#txtForeName').val().length < 3) {
+                alert('Forename value should not less than 3 character');
+
+                return false;
+            }
+            if (($('#txtForeName').val().length > 50)) {
+                alert('Forename value should not greater than 50 character');
+
+                return false;
+            }
+            if ($('#txtSurName').val().length < 2) {
+                alert('SurName value should not less than 2 character ');
+
+                return false;
+            }
+            if ($('#txtSurName').val().length > 50) {
+                alert('SurName value should not greater than 50 character ');
+
+                return false;
+            }
+
+            return true;
+        }
+
+
+
+        $(document).ready(function () {
+            $('#btnSearch').on("click", function () {
+               
+                /* Ajax method for Call API and data retrive  */
+                $.ajax({
+                    type: 'GET',
+                    url: 'http://localhost:61673/api/patient',
+                    datatype: 'json',
+                    ContentType: 'application/json; charset=utf-8',
+                    success: function (data) {
+                        var gender = "";
+                        for (var i = 0; i < data.length; i++) {
+                            gender = data[i].Gender == 0 ? "Male" : "Female";
+                            var dateOfBirth = dateToDMY(new Date(data[i].DateOfBirth));
+                            var row = '<tr><td> ' + data[i].ForeName + ' </td> <td> ' + data[i].Surname + ' </td> <td>' + dateOfBirth + '</td> <td>' + gender + '</td> </tr>'
+                            $("#tblPatientInfo").append(row);
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert('An error occurred... ');
+                    }
+                });
+            });
+
+
+            $('#btnSave').on("click", function () {
+                if (validation() == true) {
+                    var forename = $('#txtForeName').val();
+                    var surname = $('#txtSurName').val();
+                    var dateOfBirth = $('#txtDOB').val();
+                    var gender = $('#ddlGender option:selected').val();
+                    var home = $('#txtHome').val();
+                    var work = $('#txtWork').val();
+                    var mobile = $('#txtMobile').val();
+
+                    var patientDetailsModel = {
+                        "foreName": "",
+                        "surname": "",
+                        "dateOfBirth": "",
+                        "gender": 0,
+                        "telephones": []
+                    };
+
+                    var telephoneHome = {
+                        "phoneType": 0,
+                        "phoneNumber": home
+                    };
+                    var telephoneWork = {
+                        "phoneType": 1,
+                        "phoneNumber": work
+                    };
+                    var telephoneMobile = {
+                        "phoneType": 2,
+                        "phoneNumber": mobile
+                    };
+
+                    var telePhones = [];
+                    telePhones.push(telephoneHome);
+                    telePhones.push(telephoneWork);
+                    telePhones.push(telephoneMobile);
+
+                    patientDetailsModel.foreName = forename;
+                    patientDetailsModel.surname = surname;
+                    patientDetailsModel.dateOfBirth = dateOfBirth;
+                    patientDetailsModel.gender = gender;
+                    patientDetailsModel.telephones = telePhones;
+
+                    // Ajax Method for Save Patient Information
+                    $.ajax({
+                        url: 'http://localhost:61673/api/patient',
+                        type: 'POST',
+                        data: patientDetailsModel,
+                        datatype: 'json',
+                        ContentType: 'application/json; charset=utf-8',
+                        success: function (response) {
+                            alert('Saved Successfully');
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert('An error occurred... ');
+                        }
+                    });
+                }
+            });
+        });
+
+        </script>
+
+
+</head >
+                <body>
+                    <table style="width:100%;" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td class="text" align="right" valign="middle">ForeName :</td>
+                            <td><input id="txtForeName" minlength="3" maxlength="50" class="Controls" type="text" required /></td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">SurName :</td>
+                            <td><input id="txtSurName" minlength="2" maxlength="50" class="Controls" type="text" required /></td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">Date of Birth :</td>
+                            <td><input id="txtDOB" type="text" class="Controls date-picker" pattern="\d{1,2}/\d{1,2}/\d{4}" /></td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">Gender :</td>
+                            <td>
+                                <select id="ddlGender" class="ddlControls" required>
+                                    <option value="3">Select</option>
+                                    <option value="0">Male</option>
+                                    <option value="1">Female</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right">Telephone Numbers </td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">Home :</td>
+                            <td><input id="txtHome" class="Controls" max="14" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">Work :</td>
+                            <td><input id="txtWork" class="Controls" max="14" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td class="text" align="right" valign="middle">Mobile :</td>
+                            <td><input id="txtMobile" class="Controls" max="14" type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td align="right" valign="middle">
+                                <input id="btnSave" class="button" type="button" value="Save" />
+                            </td>
+                            <td>
+                                <input id="btnSearch" class="button" type="button" value="Patient Details" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="height:150px;" align="center">
+                                <div id="div3" style="height:300px;width:620px;border:solid 1px silver;overflow:auto">
+                                    <table id="tblPatientInfo" cellpadding="1" cellspacing="1" width="618" border="1">
+                                        <tr>
+                                            <td class="gridHeader" style="width:25%;font-weight:bold;">ForeName</td>
+                                            <td class="gridHeader" style="width:25%;font-weight:bold;">
+                                                SurName
+                                    </td>
+                                            <td class="gridHeader" style="width:25%;font-weight:bold;">
+                                                DOB
+                                    </td>
+                                            <td class="gridHeader" style="width:25%;font-weight:bold;">
+                                                Gender
+                                    </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+</html >

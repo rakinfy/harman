@@ -1,0 +1,5 @@
+G:\Rakesh\Test\New\Patient-API\Patient-Web\bin\Debug\Patient-Web.dll
+G:\Rakesh\Test\New\Patient-API\Patient-Web\bin\Debug\Patient-Web.pdb
+G:\Rakesh\Test\New\Patient-API\Patient-Web\obj\Debug\Patient-Web.csproj.CoreCompileInputs.cache
+G:\Rakesh\Test\New\Patient-API\Patient-Web\obj\Debug\Patient-Web.dll
+G:\Rakesh\Test\New\Patient-API\Patient-Web\obj\Debug\Patient-Web.pdb
